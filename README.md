@@ -25,8 +25,8 @@ Only genuinely inconsistent answers with the essay move that number.
 
 ```bash
 npm install
-cp .env.example .env      # add your Hack Club AI key
-npx prisma migrate dev    # creates prisma/dev.db
+cp .env.example .env      # add your Hack Club AI key and a Postgres DATABASE_URL
+npx prisma migrate dev    # creates the tables in that database
 npm run dev
 ```
 
@@ -154,7 +154,7 @@ breaks, horizontal rules, and nested tables. The auth gate was tested for reject
 created, so **no code path here has run against the live API**. Set it up and try one
 assignment with one student before trusting a class.
 
-Imports run in batches of five (`maxDuration = 300`); each essay costs a Docs fetch plus
+Imports run in batches of three (`maxDuration = 300`); each essay costs a Docs fetch plus
 two LLM calls, about a minute. The browser loops over the batches and keeps partial
 results, so a timeout loses five essays rather than thirty.
 

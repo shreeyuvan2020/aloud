@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import type { Course, CourseWork, Submission } from "@/lib/classroom";
 import { CheckIcon, ClockIcon, ImportIcon } from "@/components/icons";
 
-const BATCH = 5;
+const BATCH = 3;
 
 /** Thrown when Google auth is missing — the connect card says this already. */
 const NOT_CONNECTED = "Connect your Google account to continue.";

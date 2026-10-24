@@ -8,8 +8,9 @@ import { analyzeEssay, generateQuestions } from "@/lib/analysis";
 
 /** Each item costs a Docs fetch plus two LLM calls. Clients send this many at a
  *  time so a 32-student class doesn't overrun the function timeout — see
- *  import/page.tsx, which loops over batches and keeps partial results. */
-export const MAX_BATCH = 5;
+ *  import/page.tsx, which loops over batches and keeps partial results. Kept at
+ *  3 so a batch of ~1-minute essays stays under the 300s function limit. */
+export const MAX_BATCH = 3;
 export const maxDuration = 300;
 
 const MAX_ESSAY_CHARS = 20_000;
