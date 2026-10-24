@@ -3,17 +3,17 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model Assignment {
-  id        String @id @default(cuid())
+  id        String @id @default(cuid()) @map("_id")
   title     String
   prompt    String?
   essayText String
 
-  // JSON-encoded strings rather than Json columns for SQLite portability.
+  // JSON-encoded strings rather than Json fields.
   analysis   String // { thesis, claims[], keyDetails[], signatureDetails[] }
   questions  String // [{ id, text, targets, kind }]
   teacherToken String @unique // grants the teacher access to results
@@ -24,7 +24,7 @@ model Assignment {
 }
 
 model GoogleAccount {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   googleUserId String   @unique
   email        String
   name         String?
@@ -35,7 +35,7 @@ model GoogleAccount {
 }
 
 model Session {
-  id           String     @id @default(cuid())
+  id           String     @id @default(cuid()) @map("_id")
   assignmentId String
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 

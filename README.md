@@ -25,8 +25,8 @@ Only genuinely inconsistent answers with the essay move that number.
 
 ```bash
 npm install
-cp .env.example .env      # add your Hack Club AI key and a Postgres DATABASE_URL
-npx prisma migrate dev    # creates the tables in that database
+cp .env.example .env      # add your Hack Club AI key and a MongoDB DATABASE_URL
+npx prisma db push       # creates the collections and indexes
 npm run dev
 ```
 
