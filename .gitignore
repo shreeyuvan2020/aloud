@@ -32,9 +32,17 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# local Prisma database (student transcripts + Google refresh tokens)
+prisma/dev.db*
+
+# local tool settings/logs (may contain API keys)
+.claude/settings.local.json
+.opencode/
 
 # typescript
 *.tsbuildinfo

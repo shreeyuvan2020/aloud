@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Assignment {
+  id        String @id @default(cuid())
+  title     String
+  prompt    String?
+  essayText String
+
+  // JSON-encoded strings rather than Json columns for SQLite portability.
+  analysis   String // { thesis, claims[], keyDetails[], signatureDetails[] }
+  questions  String // [{ id, text, targets, kind }]
+  teacherToken String @unique // grants the teacher access to results
+  studentToken String @unique // the one-time link a student opens
+
+  createdAt DateTime @default(now())
+  sessions  Session[]
+}
+
+model GoogleAccount {
+  id           String   @id @default(cuid())
+  googleUserId String   @unique
+  email        String
+  name         String?
+  refreshToken String
+  scopes       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Session {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  studentName String?
+
+  // JSON-encoded [{ role: 'ai'|'student', text, ts }]
+  transcript  String    @default("[]")
+  status      String    @default("in_progress") // in_progress | complete
+
+  /**
+   * Unguessable per-session authorisation. A session id alone must not be
+   * enough to read a transcript, submit answers, or force grading.
+   * Null on rows created before this column existed; those are treated as
+   * inaccessible, the correct posture for the bug they predate.
+   */
+  sessionKey String?
+
+  // JSON-encoded per-question scoring.
+  grading String?
+
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([assignmentId, createdAt])
+}
