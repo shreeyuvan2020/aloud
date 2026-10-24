@@ -4,8 +4,14 @@ import { prisma } from "@/lib/db";
 import { parseJson } from "@/lib/sessionAccess";
 import type { EssayAnalysis, Grading, Question, Turn } from "@/lib/analysis";
 import { CheckIcon, ClockIcon, LinkIcon, SpeechIcon } from "@/components/icons";
+import { CopyButton } from "@/components/CopyButton";
+import { RememberResults } from "@/components/SavedResults";
+import { getOrigin } from "@/lib/origin";
 
 export const dynamic = "force-dynamic";
+
+/** Below this, the authorship signal is flagged for a closer look. */
+const LOW_SIGNAL = 50;
 
 const EMPTY_ANALYSIS: EssayAnalysis = {
   thesis: "",
@@ -25,20 +31,36 @@ export default async function TeacherDashboard({ params }: PageProps<"/t/[teache
 
   if (assignments.length === 0) notFound();
 
-  const origin = process.env.NEXT_PUBLIC_ORIGIN ?? "";
+  const origin = await getOrigin();
+  const resultsUrl = `${origin}/t/${teacherToken}`;
 
   return (
     <main className="wrap wide">
+      <RememberResults token={teacherToken} titles={assignments.map((a) => a.title)} />
       <div className="page-head">
         <span className="badge">
           <SpeechIcon size={13} />
-          Teacher results
+          Step 3 of 3 &middot; Results
         </span>
         <h1 style={{ marginTop: 16 }}>Your oral checks</h1>
         <p className="sub" style={{ marginBottom: 0 }}>
-          {assignments.length} assignment{assignments.length === 1 ? "" : "s"} on this link. Bookmark
-          it &mdash; it&rsquo;s how you come back to these results.
+          Scores appear here as soon as each student finishes. Reload this page to see new ones.
         </p>
+      </div>
+
+      <div className="callout" style={{ marginBottom: 28 }}>
+        <p style={{ margin: "0 0 10px" }}>
+          <strong>This page is private to you.</strong> This link is the only way back to these
+          results &mdash; there&rsquo;s no account to log in to. Bookmark it, or send it to yourself.
+        </p>
+        <div className="row">
+          <CopyButton text={resultsUrl}>Copy results link</CopyButton>
+          <a
+            href={`mailto:?subject=${encodeURIComponent("My Aloud results link")}&body=${encodeURIComponent(resultsUrl)}`}
+          >
+            <button className="ghost">Email it to myself</button>
+          </a>
+        </div>
       </div>
 
       {assignments.map((a) => {
@@ -47,6 +69,19 @@ export default async function TeacherDashboard({ params }: PageProps<"/t/[teache
         const questions = parseJson<Question[]>(a.questions, []);
         const completed = a.sessions.filter((s) => s.status === "complete");
         const started = a.sessions.length - completed.length;
+        const studentUrl = `${origin}/s/${a.studentToken}`;
+
+        const rows = a.sessions.map((s) => ({
+          id: s.id,
+          name: s.studentName ?? "Unnamed student",
+          status: s.status,
+          answered: parseJson<Turn[]>(s.transcript, []).filter((t) => t.role === "student").length,
+          grading: s.grading ? parseJson<Grading | null>(s.grading, null) : null,
+        }));
+        const scored = rows.filter((r) => r.grading && !r.grading.failed);
+        const average = scored.length
+          ? Math.round(scored.reduce((n, r) => n + r.grading!.comprehension, 0) / scored.length)
+          : null;
 
         return (
           <section key={a.id} style={{ marginBottom: 44 }}>
@@ -62,58 +97,136 @@ export default async function TeacherDashboard({ params }: PageProps<"/t/[teache
             </div>
 
             <div className="card">
-              <div className="row spread" style={{ alignItems: "flex-start", gap: 16 }}>
-                <div style={{ minWidth: 0 }}>
-                  <div className="eyebrow">What the app read</div>
-                  <p style={{ margin: "0 0 12px" }}>
-                    <strong>Their claim:</strong> {analysis.thesis || "—"}
-                  </p>
-
-                  <DetailList title="Supporting claims" items={analysis.claims} />
-                  <DetailList
-                    title="Details that reveal authorship"
-                    items={analysis.signatureDetails}
-                  />
-                  <DetailList title="Where the writing is thinnest" items={analysis.weakSpots} />
-                </div>
-              </div>
-
-              <div
-                style={{
-                  marginTop: 18,
-                  paddingTop: 16,
-                  borderTop: "1px solid var(--line)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  flexWrap: "wrap",
-                }}
-              >
-                <code className="mono">
-                  {origin}/s/{a.studentToken}
-                </code>
-                <a href={`/s/${a.studentToken}`}>
-                  <button className="ghost sm">
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <LinkIcon size={14} />
-                      Open student view
+              <h3>Send this to students</h3>
+              <ol className="steps">
+                <li>
+                  Copy the link below and post it wherever students already get work &mdash; Google
+                  Classroom, your LMS, or email. The same link works for the whole class.
+                </li>
+                <li>
+                  Each student opens it, types their name, and taps the mic to answer out loud. It
+                  takes about five minutes and needs a quiet spot and microphone access.
+                </li>
+                <li>
+                  Their score shows up in the table below when they finish. Reload this page to see
+                  new ones.
+                </li>
+              </ol>
+              <p className="token-field" style={{ marginTop: 16 }}>
+                {studentUrl}
+              </p>
+              <div className="row">
+                <CopyButton text={studentUrl}>Copy student link</CopyButton>
+                <a href={`/s/${a.studentToken}`} target="_blank" rel="noreferrer">
+                  <button className="ghost">
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                      <LinkIcon size={15} />
+                      Preview what students see
                     </span>
                   </button>
                 </a>
               </div>
             </div>
 
-            {a.sessions.length === 0 && (
+            {rows.length === 0 ? (
               <div className="card">
                 <div className="empty" style={{ padding: "18px 0" }}>
                   <span className="icon">
                     <ClockIcon size={24} />
                   </span>
-                  <p style={{ margin: 0 }}>No one has opened the student link yet.</p>
+                  <p style={{ margin: 0 }}>
+                    No student has started yet. Once you share the link above, each student shows
+                    up here as soon as they begin.
+                  </p>
                 </div>
               </div>
+            ) : (
+              <div className="card">
+                <div className="row spread" style={{ marginBottom: 10 }}>
+                  <h3 style={{ margin: 0 }}>Scores at a glance</h3>
+                  {average !== null && (
+                    <span className="muted">Class average comprehension: {average}</span>
+                  )}
+                </div>
+                <div className="table-scroll">
+                  <table className="score-table">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Status</th>
+                        <th>Comprehension</th>
+                        <th>Authorship signal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r) => {
+                        const g = r.grading && !r.grading.failed ? r.grading : null;
+                        const low = g !== null && g.ownershipConfidence < LOW_SIGNAL;
+                        return (
+                          <tr key={r.id}>
+                            <td>
+                              <a href={`#session-${r.id}`}>{r.name}</a>
+                            </td>
+                            <td>
+                              {r.status === "complete" ? (
+                                "Done"
+                              ) : (
+                                <span className="muted">
+                                  In progress ({r.answered} answer{r.answered === 1 ? "" : "s"})
+                                </span>
+                              )}
+                            </td>
+                            <td className="num">{g ? `${g.comprehension} / 100` : "—"}</td>
+                            <td>
+                              {g ? (
+                                <span className={`badge${low ? " warn" : ""}`}>
+                                  {low ? "Worth a closer look" : "Consistent"} &middot;{" "}
+                                  {g.ownershipConfidence}
+                                </span>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <details style={{ marginTop: 14 }}>
+                  <summary className="muted">How to read these scores</summary>
+                  <ul className="plain" style={{ marginTop: 10 }}>
+                    <li>
+                      <strong>Comprehension (0&ndash;100)</strong> &mdash; how well the student could
+                      explain the argument and evidence in their own essay, question by question. It
+                      isn&rsquo;t a grade on the writing.
+                    </li>
+                    <li>
+                      <strong>Authorship signal (0&ndash;100)</strong> &mdash; whether their answers
+                      fit someone who wrote this essay. Under {LOW_SIGNAL} is flagged. It&rsquo;s a
+                      prompt to talk to the student, not proof of anything &mdash; nervous students
+                      and bad microphones score low too.
+                    </li>
+                    <li>Click a name to jump to their full transcript and answer-by-answer notes.</li>
+                  </ul>
+                </details>
+              </div>
             )}
+
+            <details className="card" style={{ marginTop: 14 }}>
+              <summary className="muted">What the app read from the essay</summary>
+              <div style={{ marginTop: 14, minWidth: 0 }}>
+                <p style={{ margin: "0 0 12px" }}>
+                  <strong>Their claim:</strong> {analysis.thesis || "—"}
+                </p>
+                <DetailList title="Supporting claims" items={analysis.claims} />
+                <DetailList
+                  title="Details that reveal authorship"
+                  items={analysis.signatureDetails}
+                />
+                <DetailList title="Where the writing is thinnest" items={analysis.weakSpots} />
+              </div>
+            </details>
 
             {a.sessions.map((s) => {
               const transcript = parseJson<Turn[]>(s.transcript, []);
@@ -178,7 +291,7 @@ function SessionCard({
   const done = status === "complete";
 
   return (
-    <div className="card">
+    <div className="card" id={`session-${id}`} style={{ scrollMarginTop: 80 }}>
       <div className="row spread">
         <span className="row" style={{ gap: 9 }}>
           {done && (
@@ -210,11 +323,11 @@ function SessionCard({
                 value={grading.ownershipConfidence}
                 label="Authorship signal"
                 scale={
-                  grading.ownershipConfidence < 50
+                  grading.ownershipConfidence < LOW_SIGNAL
                     ? "Low — worth a closer look"
                     : "Consistent with the author of this essay"
                 }
-                warn={grading.ownershipConfidence < 50}
+                warn={grading.ownershipConfidence < LOW_SIGNAL}
               />
             </div>
           )}

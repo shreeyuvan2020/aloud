@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GaugeIcon, ImportIcon, ShieldIcon, SpeechIcon } from "@/components/icons";
+import { SavedResultsList } from "@/components/SavedResults";
 
 export default function Home() {
   return (
@@ -32,17 +33,34 @@ export default function Home() {
         </p>
       </div>
 
-      <h2>How a session works</h2>
+      <h2>How it works for you</h2>
       <div className="card">
         <ol className="steps">
-          <li>You paste an essay and its prompt.</li>
           <li>
-            The app reads it and drafts questions tied to the actual thesis and evidence.
+            <strong>Set it up (1 minute).</strong> Paste a student&rsquo;s essay, or import a whole
+            Google Classroom assignment. The app reads it and drafts questions about what that
+            student actually argued.
           </li>
-          <li>You send one link to the student.</li>
-          <li>They tap one button and answer out loud. The questions adapt to how they respond.</li>
-          <li>You get a transcript, a comprehension score, and a signal worth a second look.</li>
+          <li>
+            <strong>Send the student a link.</strong> You get a link to post in Classroom, your LMS,
+            or email. The student opens it, types their name, and answers out loud &mdash; about
+            five minutes, on any device with a microphone. Nothing to install and no student
+            accounts.
+          </li>
+          <li>
+            <strong>See the scores.</strong> You also get a private results link. Each student
+            appears there when they finish, with a comprehension score, an authorship signal, and
+            the full transcript. Reload the page to see new ones.
+          </li>
         </ol>
+      </div>
+
+      <div className="callout" style={{ marginTop: 14 }}>
+        <p>
+          <strong>Keep your results link.</strong> There are no teacher accounts &mdash; that link is
+          the way back to your scores. Aloud also remembers it in this browser (see &ldquo;Your
+          results&rdquo; below), but bookmark it or email it to yourself too.
+        </p>
       </div>
 
       <h2>What you get back</h2>
@@ -78,6 +96,8 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      <SavedResultsList />
 
       <div className="callout" style={{ marginTop: 26 }}>
         <p>

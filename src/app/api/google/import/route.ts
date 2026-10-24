@@ -16,6 +16,9 @@ export const maxDuration = 300;
 const MAX_ESSAY_CHARS = 20_000;
 
 const Body = z.object({
+  // Later batches of one import run send back the token from the first, so the
+  // whole class lands on a single results page.
+  teacherToken: z.string().regex(/^[0-9a-f]{32}$/).optional(),
   courseWorkTitle: z.string().max(300).default("Classroom assignment"),
   items: z
     .array(
@@ -69,6 +72,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
   const { courseWorkTitle, items } = parsed.data;
+  const teacherToken = parsed.data.teacherToken ?? randomBytes(16).toString("hex");
 
   let token: string;
   try {
@@ -111,7 +115,7 @@ export async function POST(req: Request) {
           essayText,
           analysis: JSON.stringify(analysis),
           questions: JSON.stringify(questions),
-          teacherToken: randomBytes(16).toString("hex"),
+          teacherToken,
           studentToken: randomBytes(16).toString("hex"),
         },
       });
@@ -120,7 +124,7 @@ export async function POST(req: Request) {
         userId: item.userId,
         ok: true,
         title,
-        teacherToken: assignment.teacherToken,
+        teacherToken,
         studentToken: assignment.studentToken,
       });
     } catch (err) {
@@ -130,5 +134,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ results });
+  return NextResponse.json({ results, teacherToken });
 }

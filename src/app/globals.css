@@ -841,3 +841,57 @@ details summary {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   Teacher score table
+   ============================================================ */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.score-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.score-table td {
+  padding: 11px 12px 11px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.score-table tr:last-child td {
+  border-bottom: none;
+}
+
+.score-table td.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.score-table a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.score-table a:hover {
+  text-decoration: underline;
+}
+
+details.card > summary {
+  cursor: pointer;
+}

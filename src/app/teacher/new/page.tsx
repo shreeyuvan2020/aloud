@@ -1,34 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CheckIcon, LinkIcon } from "@/components/icons";
+import { CheckIcon } from "@/components/icons";
+import { CopyButton } from "@/components/CopyButton";
+import { rememberResults } from "@/lib/savedResults";
 
 type Created = { teacherToken: string; studentToken: string; questionCount: number };
 
 const MIN_ESSAY = 80;
-
-function CopyButton({ text, children }: { text: string; children?: React.ReactNode }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      // Clipboard is a nice-to-have; the URL is on screen either way.
-    }
-  }
-
-  return (
-    <button className="ghost" onClick={copy} aria-live="polite">
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
-        {copied ? <CheckIcon size={15} /> : <LinkIcon size={15} />}
-        {copied ? "Copied" : (children ?? "Copy link")}
-      </span>
-    </button>
-  );
-}
 
 export default function NewAssignment() {
   const [title, setTitle] = useState("");
@@ -53,6 +32,7 @@ export default function NewAssignment() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       setCreated(data);
+      rememberResults([{ token: data.teacherToken, title }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -64,44 +44,53 @@ export default function NewAssignment() {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const studentUrl = `${origin}/s/${created.studentToken}`;
     const teacherUrl = `${origin}/t/${created.teacherToken}`;
+    const mailto = `mailto:?subject=${encodeURIComponent("My Aloud results link")}&body=${encodeURIComponent(`${title}\n${teacherUrl}`)}`;
 
     return (
       <main className="wrap narrow">
         <div className="page-head">
           <span className="badge">
             <CheckIcon size={13} />
-            Ready
+            Step 2 of 3 &middot; Share it
           </span>
           <h1 style={{ marginTop: 16 }}>{title}</h1>
           <p className="sub" style={{ marginBottom: 0 }}>
-            {created.questionCount} questions were drafted from this essay. Send the student link
-            &mdash; it creates a new session each time it&rsquo;s opened.
+            {created.questionCount} questions were drafted from this essay. Two links below: one
+            for the student, one for you.
           </p>
         </div>
 
         <div className="card">
-          <h3>Student link</h3>
+          <h3>1. Send the student link</h3>
           <p className="muted" style={{ marginTop: 0 }}>
-            Send this to the student. It works for every student, and starts a fresh session each
-            time.
+            Paste it into Google Classroom, your LMS, or an email. Each student who opens it types
+            their name and answers the questions out loud &mdash; about five minutes, on any device
+            with a microphone. It starts a fresh session every time it&rsquo;s opened, so the same
+            link works for a whole class.
           </p>
           <p className="token-field">{studentUrl}</p>
           <div className="row">
             <CopyButton text={studentUrl} />
-            <a href={`/s/${created.studentToken}`}>
-              <button className="ghost">Open it</button>
+            <a href={`/s/${created.studentToken}`} target="_blank" rel="noreferrer">
+              <button className="ghost">Preview what students see</button>
             </a>
           </div>
         </div>
 
         <div className="card">
-          <h3>Your results link</h3>
+          <h3>2. Save your results link</h3>
           <p className="muted" style={{ marginTop: 0 }}>
-            Keep this private. It&rsquo;s how you see transcripts and scores later.
+            This is where scores and transcripts appear as students finish. There&rsquo;s no
+            account to log in to, so this link is the only way back &mdash; keep it private,
+            bookmark it, or email it to yourself. (It&rsquo;s also remembered in this browser, under
+            &ldquo;Your results&rdquo; on the home page.)
           </p>
           <p className="token-field">{teacherUrl}</p>
           <div className="row">
-            <CopyButton text={teacherUrl} />
+            <CopyButton text={teacherUrl}>Copy results link</CopyButton>
+            <a href={mailto}>
+              <button className="ghost">Email it to myself</button>
+            </a>
             <a href={`/t/${created.teacherToken}`}>
               <button className="ghost">Go to results</button>
             </a>
@@ -114,11 +103,11 @@ export default function NewAssignment() {
   return (
     <main className="wrap narrow">
       <div className="page-head">
-        <span className="badge">Step 1 of 2</span>
+        <span className="badge">Step 1 of 3 &middot; Paste the essay</span>
         <h1 style={{ marginTop: 16 }}>Set up a session</h1>
         <p className="sub" style={{ marginBottom: 0 }}>
-          Paste the essay exactly as the student submitted it. You&rsquo;ll get a link to send back
-          in about a minute.
+          Paste the essay exactly as the student submitted it. You&rsquo;ll get a link to send to the
+          student in about a minute &mdash; then a private page where their scores show up.
         </p>
       </div>
 

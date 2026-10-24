@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Course, CourseWork, Submission } from "@/lib/classroom";
 import { CheckIcon, ClockIcon, ImportIcon } from "@/components/icons";
+import { CopyButton } from "@/components/CopyButton";
+import { rememberResults } from "@/lib/savedResults";
 
 const BATCH = 3;
 
@@ -46,6 +48,8 @@ function ImportFromClassroom() {
   const [error, setError] = useState("");
   const [needAuth, setNeedAuth] = useState(false);
   const [outcomes, setOutcomes] = useState<Outcome[] | null>(null);
+  // One results page for the whole run; set by the first batch, reused by the rest.
+  const [resultsToken, setResultsToken] = useState<string | null>(null);
 
   // Read from the hook, not `window` during render — the server renders this
   // path null, so a direct read is a hydration mismatch on the exact page the
@@ -137,6 +141,8 @@ function ImportFromClassroom() {
     setProgress({ done: 0, total: items.length });
 
     const collected: Outcome[] = [];
+    let batchToken: string | undefined;
+    setResultsToken(null);
 
     try {
       for (let i = 0; i < items.length; i += BATCH) {
@@ -148,7 +154,7 @@ function ImportFromClassroom() {
         const res = await fetch("/api/google/import", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseWorkTitle: picked.title, items: chunk }),
+          body: JSON.stringify({ courseWorkTitle: picked.title, items: chunk, teacherToken: batchToken }),
         });
 
         if (res.status === 401) {
@@ -159,6 +165,11 @@ function ImportFromClassroom() {
         if (!res.ok) throw new Error(data.error ?? "Import failed");
 
         collected.push(...(data.results as Outcome[]));
+        if ((data.results as Outcome[]).some((o) => o.ok)) {
+          batchToken = data.teacherToken as string;
+          setResultsToken(batchToken);
+          rememberResults([{ token: batchToken, title: `${picked.title} (Classroom import)` }]);
+        }
         setOutcomes([...collected]);
         setProgress({ done: collected.length, total: items.length });
       }
@@ -375,53 +386,85 @@ function ImportFromClassroom() {
           )}
 
           {outcomes && (
-            <div className="card">
-              <h3>
-                Imported {imported}
-                {failed > 0 && ` · ${failed} couldn't be read`}
-              </h3>
-
-              {outcomes.map((o) => (
-                <div
-                  key={o.userId}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    flexWrap: "wrap",
-                    padding: "10px 0",
-                    borderTop: "1px solid var(--line)",
-                  }}
-                >
-                  {o.ok ? (
-                    <>
-                      <span className="row" style={{ gap: 9 }}>
-                        <span style={{ color: "var(--accent)", display: "inline-flex" }}>
-                          <CheckIcon size={16} />
-                        </span>
-                        <strong style={{ fontWeight: 600 }}>{o.title}</strong>
-                        <code className="mono">/s/{o.studentToken}</code>
-                      </span>
-                      <a href={`/t/${o.teacherToken}`}>
-                        <button className="ghost sm">Results</button>
-                      </a>
-                    </>
-                  ) : (
-                    <span className="row" style={{ gap: 9 }}>
-                      <strong style={{ fontWeight: 600 }}>{shortName(o.userId)}</strong>
-                      <span className="muted">{o.error}</span>
-                    </span>
-                  )}
+            <>
+              {resultsToken && (
+                <div className="card">
+                  <h3>Your results page</h3>
+                  <p className="muted" style={{ marginTop: 0 }}>
+                    Every student&rsquo;s score and transcript will appear on this one page as they
+                    finish. There&rsquo;s no account to log in to, so keep this link &mdash;
+                    it&rsquo;s the only way back. It&rsquo;s also saved under &ldquo;Your
+                    results&rdquo; on the home page in this browser.
+                  </p>
+                  <p className="token-field">{`${window.location.origin}/t/${resultsToken}`}</p>
+                  <div className="row">
+                    <CopyButton text={`${window.location.origin}/t/${resultsToken}`}>
+                      Copy results link
+                    </CopyButton>
+                    <a href={`/t/${resultsToken}`}>
+                      <button className="ghost">Go to results</button>
+                    </a>
+                  </div>
                 </div>
-              ))}
+              )}
 
-              <div className="row" style={{ marginTop: 16 }}>
-                <a href="/teacher/new">
-                  <button className="ghost">Paste an essay instead</button>
-                </a>
+              <div className="card">
+                <h3>
+                  Imported {imported}
+                  {failed > 0 && ` · ${failed} couldn't be read`}
+                </h3>
+                {imported > 0 && (
+                  <p className="muted" style={{ marginTop: 0 }}>
+                    Each student gets their own link, because the questions are about their own
+                    essay. Send each student the link next to their name &mdash; a private comment
+                    in Classroom works well.
+                  </p>
+                )}
+
+                {outcomes.map((o) => (
+                  <div
+                    key={o.userId}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      flexWrap: "wrap",
+                      padding: "10px 0",
+                      borderTop: "1px solid var(--line)",
+                    }}
+                  >
+                    {o.ok ? (
+                      <>
+                        <span className="row" style={{ gap: 9 }}>
+                          <span style={{ color: "var(--accent)", display: "inline-flex" }}>
+                            <CheckIcon size={16} />
+                          </span>
+                          <strong style={{ fontWeight: 600 }}>{shortName(o.userId)}</strong>
+                        </span>
+                        <CopyButton
+                          text={`${window.location.origin}/s/${o.studentToken}`}
+                          className="ghost sm"
+                        >
+                          Copy student link
+                        </CopyButton>
+                      </>
+                    ) : (
+                      <span className="row" style={{ gap: 9 }}>
+                        <strong style={{ fontWeight: 600 }}>{shortName(o.userId)}</strong>
+                        <span className="muted">{o.error}</span>
+                      </span>
+                    )}
+                  </div>
+                ))}
+
+                <div className="row" style={{ marginTop: 16 }}>
+                  <a href="/teacher/new">
+                    <button className="ghost">Paste an essay instead</button>
+                  </a>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </>
       )}

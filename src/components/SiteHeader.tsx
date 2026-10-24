@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ImportIcon, SpeechIcon } from "./icons";
+import { GaugeIcon, ImportIcon, SpeechIcon } from "./icons";
 
 export function SiteHeader() {
   return (
@@ -19,6 +19,10 @@ export function SiteHeader() {
           <Link href="/teacher/import">
             <ImportIcon size={15} />
             Import from Classroom
+          </Link>
+          <Link href="/#your-results">
+            <GaugeIcon size={15} />
+            Your results
           </Link>
         </nav>
       </div>
