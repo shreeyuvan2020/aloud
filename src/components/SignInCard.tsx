@@ -12,7 +12,7 @@ export function SignInCard({ next, title }: { next: string; title?: string }) {
         <h1 style={{ marginTop: 16 }}>{title ?? "Sign in to continue"}</h1>
         <p className="sub" style={{ marginBottom: 0 }}>
           Your sessions and student scores are tied to your Google account, so only you can see
-          them &mdash; from any device. Students never need an account.
+          them &mdash; from any device. Students can use a link or sign in with Google.
         </p>
       </div>
       <div className="card">

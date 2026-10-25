@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { parseJson } from "@/lib/sessionAccess";
 import { nextTurn, type EssayAnalysis, type Question, type Turn } from "@/lib/analysis";
 import { NotConfigured } from "@/lib/hackclub";
+import { getTeacher } from "@/lib/session";
 
 const Body = z.object({
   studentToken: z.string().min(1),
@@ -50,11 +51,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // Whoever is signed in (teacher or student, it is the same Google login).
+    const account = await getTeacher();
     const sessionKey = randomBytes(32).toString("hex");
     const session = await prisma.session.create({
       data: {
         assignmentId: assignment.id,
-        studentName: parsed.data.studentName.trim() || null,
+        studentName: parsed.data.studentName.trim() || account?.name || null,
+        studentAccountId: account?.id ?? null,
         transcript: JSON.stringify([
           { role: "ai", text: opener.text, ts: new Date().toISOString() } as Turn,
         ]),

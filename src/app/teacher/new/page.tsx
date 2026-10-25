@@ -12,6 +12,7 @@ export default function NewAssignment() {
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
   const [essayText, setEssayText] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<Created | null>(null);
@@ -26,7 +27,7 @@ export default function NewAssignment() {
       const res = await fetch("/api/assignments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, prompt, essayText }),
+        body: JSON.stringify({ title, prompt, essayText, studentEmail: studentEmail.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
@@ -63,6 +64,9 @@ export default function NewAssignment() {
             their name and answers the questions out loud &mdash; about five minutes, on any device
             with a microphone. It starts a fresh session every time it&rsquo;s opened, so the same
             link works for a whole class.
+            {studentEmail.trim() && (
+              <> It&rsquo;s also waiting on the home page when {studentEmail.trim()} signs in.</>
+            )}
           </p>
           <p className="token-field">{studentUrl}</p>
           <div className="row">
@@ -121,6 +125,19 @@ export default function NewAssignment() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Optional — helps the app judge what the student was asked to do"
           />
+
+          <label htmlFor="studentEmail">Student&rsquo;s Google email (optional)</label>
+          <input
+            id="studentEmail"
+            type="email"
+            value={studentEmail}
+            onChange={(e) => setStudentEmail(e.target.value)}
+            placeholder="student@school.org"
+          />
+          <p className="hint">
+            If you add it, the student can sign in with Google and find this assignment waiting for
+            them &mdash; no link needed. Leave it blank to just share the link.
+          </p>
 
           <label htmlFor="essay">Student&rsquo;s essay</label>
           <textarea

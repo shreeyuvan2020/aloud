@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GaugeIcon, ImportIcon, ShieldIcon, SpeechIcon } from "@/components/icons";
 import { MyResults } from "@/components/MyResults";
+import { AssignedToMe } from "@/components/AssignedToMe";
 
 const SIGN_IN_ERRORS: Record<string, string> = {
   consent_denied: "You declined the Google sign-in, so nothing was connected.",
@@ -39,7 +40,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </Link>
         </div>
         <p className="hint" style={{ marginTop: 12 }}>
-          Runs in the browser. Nothing to install, nothing to send the student ahead of time.
+          Runs in the browser, with nothing to install. Students can open a link, or sign in with
+          Google to see what they&rsquo;ve been assigned.
         </p>
       </div>
 
@@ -112,6 +114,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </p>
         </div>
       </div>
+
+      <AssignedToMe />
 
       <MyResults />
 

@@ -10,6 +10,8 @@ const Body = z.object({
   title: z.string().min(1).max(200),
   prompt: z.string().max(4000).optional().default(""),
   essayText: z.string().min(80).max(60000),
+  // Optional: lets that student sign in with Google and find this assignment.
+  studentEmail: z.union([z.literal(""), z.string().email().max(254)]).optional().default(""),
 });
 
 export async function POST(req: Request) {
@@ -34,6 +36,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
   const { title, prompt, essayText } = parsed.data;
+  const studentEmail = parsed.data.studentEmail.trim().toLowerCase() || null;
 
   try {
     const analysis = await analyzeEssay(essayText);
@@ -57,6 +60,7 @@ export async function POST(req: Request) {
         analysis: JSON.stringify(analysis),
         questions: JSON.stringify(questions),
         ownerId: teacher.id,
+        studentEmail,
         teacherToken: randomBytes(16).toString("hex"),
         studentToken: randomBytes(16).toString("hex"),
       },

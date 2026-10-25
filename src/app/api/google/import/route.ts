@@ -119,6 +119,8 @@ export async function POST(req: Request) {
           analysis: JSON.stringify(analysis),
           questions: JSON.stringify(questions),
           ownerId,
+          // A Classroom userId is the student's Google account id.
+          studentGoogleId: item.userId,
           teacherToken,
           studentToken: randomBytes(16).toString("hex"),
         },

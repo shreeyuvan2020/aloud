@@ -23,10 +23,18 @@ model Assignment {
   // existed; the first teacher to open such a results link claims it.
   ownerId String?
 
+  // Who the assignment is for, so that student can sign in and find it instead
+  // of needing the link. A Classroom import knows the Google user id; a pasted
+  // essay only has whatever email the teacher typed (lowercased).
+  studentGoogleId String?
+  studentEmail    String?
+
   createdAt DateTime @default(now())
   sessions  Session[]
 
   @@index([ownerId, createdAt])
+  @@index([studentGoogleId])
+  @@index([studentEmail])
 }
 
 model GoogleAccount {
@@ -59,6 +67,9 @@ model Session {
    * inaccessible, the correct posture for the bug they predate.
    */
   sessionKey String?
+
+  // Set when the student was signed in, so their assigned list can show "Done".
+  studentAccountId String?
 
   // JSON-encoded per-question scoring.
   grading String?
