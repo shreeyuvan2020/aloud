@@ -5,7 +5,8 @@ import { parseJson } from "@/lib/sessionAccess";
 import type { EssayAnalysis, Grading, Question, Turn } from "@/lib/analysis";
 import { CheckIcon, ClockIcon, LinkIcon, SpeechIcon } from "@/components/icons";
 import { CopyButton } from "@/components/CopyButton";
-import { RememberResults } from "@/components/SavedResults";
+import { SignInCard } from "@/components/SignInCard";
+import { getTeacher } from "@/lib/session";
 import { getOrigin } from "@/lib/origin";
 
 export const dynamic = "force-dynamic";
@@ -23,8 +24,22 @@ const EMPTY_ANALYSIS: EssayAnalysis = {
 
 export default async function TeacherDashboard({ params }: PageProps<"/t/[teacherToken]">) {
   const { teacherToken } = await params;
+
+  const teacher = await getTeacher();
+  if (!teacher) {
+    return <SignInCard next={`/t/${teacherToken}`} title="Sign in to see your results" />;
+  }
+
+  // Assignments made before sign-in existed have no owner. Whoever holds their
+  // secret link and signs in first claims them; the filter keeps it one-way.
+  await prisma.assignment.updateMany({
+    where: { teacherToken, ownerId: null },
+    data: { ownerId: teacher.id },
+  });
+
+  // Scoped to the owner, so someone else's assignments sharing a token never show.
   const assignments = await prisma.assignment.findMany({
-    where: { teacherToken },
+    where: { teacherToken, ownerId: teacher.id },
     include: { sessions: { orderBy: { createdAt: "desc" } } },
     orderBy: { createdAt: "desc" },
   });
@@ -32,11 +47,9 @@ export default async function TeacherDashboard({ params }: PageProps<"/t/[teache
   if (assignments.length === 0) notFound();
 
   const origin = await getOrigin();
-  const resultsUrl = `${origin}/t/${teacherToken}`;
 
   return (
     <main className="wrap wide">
-      <RememberResults token={teacherToken} titles={assignments.map((a) => a.title)} />
       <div className="page-head">
         <span className="badge">
           <SpeechIcon size={13} />
@@ -49,18 +62,11 @@ export default async function TeacherDashboard({ params }: PageProps<"/t/[teache
       </div>
 
       <div className="callout" style={{ marginBottom: 28 }}>
-        <p style={{ margin: "0 0 10px" }}>
-          <strong>This page is private to you.</strong> This link is the only way back to these
-          results &mdash; there&rsquo;s no account to log in to. Bookmark it, or send it to yourself.
+        <p>
+          <strong>Only you can see this page.</strong> Results are tied to your Google account (
+          {teacher.email}), so sign in from any device to get back to them &mdash; you&rsquo;ll also
+          find them under &ldquo;Your results&rdquo; on the home page.
         </p>
-        <div className="row">
-          <CopyButton text={resultsUrl}>Copy results link</CopyButton>
-          <a
-            href={`mailto:?subject=${encodeURIComponent("My Aloud results link")}&body=${encodeURIComponent(resultsUrl)}`}
-          >
-            <button className="ghost">Email it to myself</button>
-          </a>
-        </div>
       </div>
 
       {assignments.map((a) => {

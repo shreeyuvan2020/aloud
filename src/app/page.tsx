@@ -1,10 +1,20 @@
 import Link from "next/link";
 import { GaugeIcon, ImportIcon, ShieldIcon, SpeechIcon } from "@/components/icons";
-import { SavedResultsList } from "@/components/SavedResults";
+import { MyResults } from "@/components/MyResults";
 
-export default function Home() {
+const SIGN_IN_ERRORS: Record<string, string> = {
+  consent_denied: "You declined the Google sign-in, so nothing was connected.",
+  oauth_state: "The sign-in attempt didn't validate. Try signing in again.",
+  oauth_failed: "Google sign-in failed. Try again.",
+};
+
+export default async function Home({ searchParams }: PageProps<"/">) {
+  const { signin_error } = await searchParams;
+  const signInError = typeof signin_error === "string" ? SIGN_IN_ERRORS[signin_error] : undefined;
+
   return (
     <main className="wrap">
+      {signInError && <div className="error">{signInError}</div>}
       <div className="page-head">
         <span className="badge">
           <SpeechIcon size={13} />
@@ -42,25 +52,18 @@ export default function Home() {
             student actually argued.
           </li>
           <li>
-            <strong>Send the student a link.</strong> You get a link to post in Classroom, your LMS,
+            <strong>Send the student a link.</strong> You&rsquo;ll get a link to post in Classroom, your LMS,
             or email. The student opens it, types their name, and answers out loud &mdash; about
             five minutes, on any device with a microphone. Nothing to install and no student
             accounts.
           </li>
           <li>
-            <strong>See the scores.</strong> You also get a private results link. Each student
-            appears there when they finish, with a comprehension score, an authorship signal, and
-            the full transcript. Reload the page to see new ones.
+            <strong>See the scores.</strong> Sign in with Google and open &ldquo;Your
+            results.&rdquo; Each student appears there when they finish, with a comprehension
+            score, an authorship signal, and the full transcript &mdash; visible only to you.
+            Reload the page to see new ones.
           </li>
         </ol>
-      </div>
-
-      <div className="callout" style={{ marginTop: 14 }}>
-        <p>
-          <strong>Keep your results link.</strong> There are no teacher accounts &mdash; that link is
-          the way back to your scores. Aloud also remembers it in this browser (see &ldquo;Your
-          results&rdquo; below), but bookmark it or email it to yourself too.
-        </p>
       </div>
 
       <h2>What you get back</h2>
@@ -97,7 +100,7 @@ export default function Home() {
         </div>
       </div>
 
-      <SavedResultsList />
+      <MyResults />
 
       <div className="callout" style={{ marginTop: 26 }}>
         <p>

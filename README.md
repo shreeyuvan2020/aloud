@@ -37,15 +37,19 @@ Get an API key at https://ai.hackclub.com (sign in with Hack Club). It goes in `
 
 ## Flow
 
+0. Teachers sign in with Google (name and email only). Sessions and results are owned by
+   that account, so only the teacher who set a session up can see its scores. Students need
+   no account.
 1. **/teacher/import** — connect Google Classroom, pick an assignment, and the essays come
    in on their own. Or **/teacher/new** — paste a title, optional prompt, and the essay.
 2. The app extracts a thesis, claims, key details, *signature details* (the unusual
    choices that reveal authorship), and *weak spots* — then drafts six questions across
    thesis / evidence / reasoning / choice / counterargument / weak-spot.
-3. You get two links: a **student link** to send out, and a **results link** to keep.
+3. You get a **student link** to send out. Results show up under "Your results" when you
+   are signed in.
 4. **/s/[token]** — the student enters their name, then holds to talk. Audio is
    transcribed, the tutor asks an adaptive follow-up, and reads it aloud.
-5. **/t/[token]** — transcripts, comprehension score, authorship signal, per-question notes.
+5. **/t/[token]** — (owner only) transcripts, comprehension score, authorship signal, per-question notes.
 
 The student link can be opened more than once; each visit starts a fresh session.
 
@@ -101,7 +105,7 @@ src/app/t/[token]     teacher results
 
 `/teacher/import` pulls a whole assignment at once: you pick a course, pick a written
 assignment, tick the students you want, and it creates an `Assignment` row per essay with
-the same student and results links you'd get from pasting. Nothing downstream changes.
+the same student links you'd get from pasting, all owned by you. Nothing downstream changes.
 
 **Students must attach a Google Doc.** A submission that is a short typed answer
 (`note`) is used only as a fallback, and a Doc the student *created themselves* rather than

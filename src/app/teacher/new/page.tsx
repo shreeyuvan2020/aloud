@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { CheckIcon } from "@/components/icons";
 import { CopyButton } from "@/components/CopyButton";
-import { rememberResults } from "@/lib/savedResults";
 
 type Created = { teacherToken: string; studentToken: string; questionCount: number };
 
@@ -32,7 +31,6 @@ export default function NewAssignment() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       setCreated(data);
-      rememberResults([{ token: data.teacherToken, title }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -43,8 +41,6 @@ export default function NewAssignment() {
   if (created) {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const studentUrl = `${origin}/s/${created.studentToken}`;
-    const teacherUrl = `${origin}/t/${created.teacherToken}`;
-    const mailto = `mailto:?subject=${encodeURIComponent("My Aloud results link")}&body=${encodeURIComponent(`${title}\n${teacherUrl}`)}`;
 
     return (
       <main className="wrap narrow">
@@ -78,21 +74,15 @@ export default function NewAssignment() {
         </div>
 
         <div className="card">
-          <h3>2. Save your results link</h3>
+          <h3>2. Check scores later</h3>
           <p className="muted" style={{ marginTop: 0 }}>
-            This is where scores and transcripts appear as students finish. There&rsquo;s no
-            account to log in to, so this link is the only way back &mdash; keep it private,
-            bookmark it, or email it to yourself. (It&rsquo;s also remembered in this browser, under
-            &ldquo;Your results&rdquo; on the home page.)
+            Results appear on your results page as students finish. They&rsquo;re tied to your
+            Google account, so just sign in from any device and open &ldquo;Your results&rdquo;
+            &mdash; no link to keep track of, and nobody else can see them.
           </p>
-          <p className="token-field">{teacherUrl}</p>
           <div className="row">
-            <CopyButton text={teacherUrl}>Copy results link</CopyButton>
-            <a href={mailto}>
-              <button className="ghost">Email it to myself</button>
-            </a>
             <a href={`/t/${created.teacherToken}`}>
-              <button className="ghost">Go to results</button>
+              <button>Go to results</button>
             </a>
           </div>
         </div>

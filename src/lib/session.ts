@@ -36,8 +36,8 @@ export function verifySession(raw: string | undefined): string | null {
 export class Unauthenticated extends Error {}
 
 export class ReauthRequired extends Error {
-  constructor() {
-    super("Your Google connection expired. Reconnect to keep importing.");
+  constructor(message = "Your Google connection expired. Reconnect to keep importing.") {
+    super(message);
   }
 }
 
@@ -52,6 +52,16 @@ export async function requireTeacher() {
   const account = await prisma.googleAccount.findUnique({ where: { id } });
   if (!account) throw new Unauthenticated("Not signed in.");
   return account;
+}
+
+/** The signed-in teacher, or null. Unlike requireTeacher this never throws. */
+export async function getTeacher() {
+  const jar = await cookies();
+  const raw = jar.get(COOKIE)?.value;
+  if (!raw) return null;
+  const id = verifySession(raw);
+  if (!id) return null;
+  return prisma.googleAccount.findUnique({ where: { id } });
 }
 
 export const SESSION_COOKIE = COOKIE;

@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import type { Course, CourseWork, Submission } from "@/lib/classroom";
 import { CheckIcon, ClockIcon, ImportIcon } from "@/components/icons";
 import { CopyButton } from "@/components/CopyButton";
-import { rememberResults } from "@/lib/savedResults";
 
 const BATCH = 3;
 
@@ -168,7 +167,6 @@ function ImportFromClassroom() {
         if ((data.results as Outcome[]).some((o) => o.ok)) {
           batchToken = data.teacherToken as string;
           setResultsToken(batchToken);
-          rememberResults([{ token: batchToken, title: `${picked.title} (Classroom import)` }]);
         }
         setOutcomes([...collected]);
         setProgress({ done: collected.length, total: items.length });
@@ -391,20 +389,13 @@ function ImportFromClassroom() {
                 <div className="card">
                   <h3>Your results page</h3>
                   <p className="muted" style={{ marginTop: 0 }}>
-                    Every student&rsquo;s score and transcript will appear on this one page as they
-                    finish. There&rsquo;s no account to log in to, so keep this link &mdash;
-                    it&rsquo;s the only way back. It&rsquo;s also saved under &ldquo;Your
-                    results&rdquo; on the home page in this browser.
+                    Every student&rsquo;s score and transcript will appear on one page as they
+                    finish. It&rsquo;s tied to your Google account &mdash; sign in from any device
+                    and find it under &ldquo;Your results&rdquo; on the home page.
                   </p>
-                  <p className="token-field">{`${window.location.origin}/t/${resultsToken}`}</p>
-                  <div className="row">
-                    <CopyButton text={`${window.location.origin}/t/${resultsToken}`}>
-                      Copy results link
-                    </CopyButton>
-                    <a href={`/t/${resultsToken}`}>
-                      <button className="ghost">Go to results</button>
-                    </a>
-                  </div>
+                  <a href={`/t/${resultsToken}`}>
+                    <button>Go to results</button>
+                  </a>
                 </div>
               )}
 

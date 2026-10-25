@@ -5,6 +5,9 @@ import { NextResponse } from "next/server";
 
 export async function requireToken(): Promise<string> {
   const account = await requireTeacher();
+  if (!account.refreshToken) {
+    throw new ReauthRequired("Connect Google Classroom to import essays.");
+  }
   try {
     return await accessTokenFor(account.refreshToken);
   } catch (err) {

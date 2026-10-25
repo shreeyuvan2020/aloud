@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { googleErrorResponse, requireToken } from "@/lib/account";
+import { requireTeacher } from "@/lib/session";
 import { fetchDocText, HttpError } from "@/lib/classroom";
 import { analyzeEssay, generateQuestions } from "@/lib/analysis";
 
@@ -75,7 +76,9 @@ export async function POST(req: Request) {
   const teacherToken = parsed.data.teacherToken ?? randomBytes(16).toString("hex");
 
   let token: string;
+  let ownerId: string;
   try {
+    ownerId = (await requireTeacher()).id;
     token = await requireToken();
   } catch (err) {
     return googleErrorResponse(err);
@@ -115,6 +118,7 @@ export async function POST(req: Request) {
           essayText,
           analysis: JSON.stringify(analysis),
           questions: JSON.stringify(questions),
+          ownerId,
           teacherToken,
           studentToken: randomBytes(16).toString("hex"),
         },

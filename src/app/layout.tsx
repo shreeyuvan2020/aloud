@@ -24,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="footer">
           <div className="footer-inner">
             Aloud &mdash; the student is never accused of anything; you decide what a pattern
-            means. Results links are private to whoever created them.
+            means. Results are visible only to the teacher who set them up.
           </div>
         </footer>
       </body>

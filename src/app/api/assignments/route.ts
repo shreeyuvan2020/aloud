@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { analyzeEssay, generateQuestions } from "@/lib/analysis";
 import { NotConfigured } from "@/lib/hackclub";
+import { getTeacher } from "@/lib/session";
 
 const Body = z.object({
   title: z.string().min(1).max(200),
@@ -12,6 +13,15 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
+  // Also keeps strangers from spending the LLM budget on arbitrary essays.
+  const teacher = await getTeacher();
+  if (!teacher) {
+    return NextResponse.json(
+      { error: "Sign in with Google to set up a session.", code: "unauthenticated" },
+      { status: 401 },
+    );
+  }
+
   let raw: unknown;
   try {
     raw = await req.json();
@@ -46,6 +56,7 @@ export async function POST(req: Request) {
         essayText,
         analysis: JSON.stringify(analysis),
         questions: JSON.stringify(questions),
+        ownerId: teacher.id,
         teacherToken: randomBytes(16).toString("hex"),
         studentToken: randomBytes(16).toString("hex"),
       },

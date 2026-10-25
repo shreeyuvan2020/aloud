@@ -25,6 +25,13 @@ export const SCOPES = [
   "https://www.googleapis.com/auth/documents.readonly",
 ];
 
+/** Sign-in only: identifies the teacher, reads nothing else. */
+export const LOGIN_SCOPES = [
+  "openid",
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
+];
+
 function clientConfig() {
   const id = process.env.GOOGLE_CLIENT_ID;
   const secret = process.env.GOOGLE_CLIENT_SECRET;
@@ -52,6 +59,21 @@ export function authUrl(state: string, opts: { forceConsent?: boolean } = {}) {
     state,
     include_granted_scopes: true,
   });
+}
+
+/** Plain sign-in: Google returns an access token only, with no refresh token to store. */
+export function loginUrl(state: string) {
+  return oauthClient().generateAuthUrl({
+    access_type: "online",
+    scope: LOGIN_SCOPES,
+    state,
+  });
+}
+
+export async function exchangeLoginCode(code: string) {
+  const { tokens } = await oauthClient().getToken(code);
+  if (!tokens.access_token) throw new Error("Google did not return an access token");
+  return tokens.access_token;
 }
 
 export async function exchangeCode(code: string) {

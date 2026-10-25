@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { GaugeIcon, ImportIcon, SpeechIcon } from "./icons";
+import { SignOutButton } from "./SignOutButton";
+import { getTeacher } from "@/lib/session";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const teacher = await getTeacher();
+
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -24,6 +28,16 @@ export function SiteHeader() {
             <GaugeIcon size={15} />
             Your results
           </Link>
+          {teacher ? (
+            <>
+              <span className="muted" title={teacher.email}>
+                {teacher.name ?? teacher.email}
+              </span>
+              <SignOutButton />
+            </>
+          ) : (
+            <a href="/api/auth/login?next=/">Sign in</a>
+          )}
         </nav>
       </div>
     </header>

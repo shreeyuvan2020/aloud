@@ -19,10 +19,15 @@ export async function POST() {
     const accountId = raw ? verifySession(raw) : null;
     if (accountId) {
       const account = await prisma.googleAccount.findUnique({ where: { id: accountId } });
-      // Delete locally. If the refresh token is already dead the revoke call just
-      // fails silently, which is fine — the row is what gates the UI.
-      await prisma.googleAccount.delete({ where: { id: accountId } });
-      if (account) {
+      // Drop only the Classroom grant. The account row stays: it owns the
+      // teacher's results, and disconnecting Classroom must not sign them out.
+      await prisma.googleAccount.update({
+        where: { id: accountId },
+        data: { refreshToken: null, scopes: "" },
+      });
+      if (account?.refreshToken) {
+        // If the refresh token is already dead the revoke call just fails
+        // silently, which is fine.
         await fetch("https://oauth2.googleapis.com/revoke", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -31,9 +36,7 @@ export async function POST() {
       }
     }
 
-    const res = NextResponse.json({ ok: true });
-    res.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return googleErrorResponse(err);
   }

@@ -16,11 +16,17 @@ model Assignment {
   // JSON-encoded strings rather than Json fields.
   analysis   String // { thesis, claims[], keyDetails[], signatureDetails[] }
   questions  String // [{ id, text, targets, kind }]
-  teacherToken String @unique // grants the teacher access to results
+  teacherToken String @unique // groups one batch of assignments on a single results page
   studentToken String @unique // the one-time link a student opens
+
+  // GoogleAccount that owns the results. Null on rows created before sign-in
+  // existed; the first teacher to open such a results link claims it.
+  ownerId String?
 
   createdAt DateTime @default(now())
   sessions  Session[]
+
+  @@index([ownerId, createdAt])
 }
 
 model GoogleAccount {
@@ -28,8 +34,9 @@ model GoogleAccount {
   googleUserId String   @unique
   email        String
   name         String?
-  refreshToken String
-  scopes       String
+  // Null until the teacher connects Classroom; plain sign-in doesn't need one.
+  refreshToken String?
+  scopes       String   @default("")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
