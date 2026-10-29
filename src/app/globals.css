@@ -895,20 +895,3 @@ details summary {
 details.card > summary {
   cursor: pointer;
 }
-
-/* Demo video on the home page */
-.demo-video {
-  margin: 0 0 40px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.demo-video video {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-}

@@ -45,19 +45,6 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         </p>
       </div>
 
-      <h2>See it in 50 seconds</h2>
-      <div className="demo-video">
-        <video
-          controls
-          preload="metadata"
-          playsInline
-          poster="/aloud-demo-poster.jpg"
-          aria-label="Demo: a teacher pastes an essay, shares a link, the student answers aloud, and the teacher sees scores."
-        >
-          <source src="/aloud-demo.mp4" type="video/mp4" />
-        </video>
-      </div>
-
       <h2>How it works for you</h2>
       <div className="card">
         <ol className="steps">
